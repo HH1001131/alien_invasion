@@ -1,0 +1,10 @@
+# 忽略 Python 编译产物
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 忽略其他临时文件或目录（可选）
+.DS_Store      # Mac 系统文件
+.idea/         # JetBrains IDE 配置
+venv/          # Python 虚拟环境
