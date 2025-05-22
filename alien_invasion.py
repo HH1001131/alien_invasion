@@ -5,6 +5,7 @@ import pygame
 
 from settings import Settings
 from game_stats import GameStats
+from scoreboard import Scoreboard
 from button import Button
 from ship import Ship
 from bullet import Bullet
@@ -26,8 +27,9 @@ class AlienInvasion:
         self.settings.screen_height=self.screen.get_rect().height
         pygame.display.set_caption("Alien Invasion")
 
-        #创建一个用于存储游戏统计信息的实例
+        #创建一个用于存储游戏统计信息的实例,并创建记分牌
         self.stats=GameStats(self)
+        self.sb=Scoreboard(self)
                 
         self.ship=Ship(self)
         self.bullets=pygame.sprite.Group()
@@ -117,8 +119,9 @@ class AlienInvasion:
     def _ship_hit(self):
         """响应飞船和外星人的碰撞"""
         if self.stats.ships_left>0:
-            #将余下飞船数-1
+            #将余下飞船数-1并更新记分牌
             self.stats.ships_left-=1
+            self.sb.prep_ships()
 
             self.bullets.empty()
             self.aliens.empty()
@@ -147,11 +150,21 @@ class AlienInvasion:
         """响应子弹和外星人碰撞"""         
         #检查是否有子弹击中外星人，有就删除相应子弹和外星人
         collisions=pygame.sprite.groupcollide(self.bullets,self.aliens,True,True)
+        if collisions:
+            for aliens in collisions.values():
+                self.stats.score+=self.settings.alien_points*len(aliens)
+            self.sb.prep_score()
+            self.sb.check_high_score()
+
         if not self.aliens:
             #删除现有子弹并创建一个新外星舰队
             self.bullets.empty()
             self._creat_fleet()
             self.settings.increase_speed()
+
+            #提高等级
+            self.stats.level+=1
+            self.sb.prep_level()
 
      #侦听键盘和鼠标事件
     def _check_events(self):
@@ -175,6 +188,9 @@ class AlienInvasion:
             
             #重置游戏统计信息
             self.stats.reset_stats()
+            self.sb.prep_score()
+            self.sb.prep_level()
+            self.sb.prep_ships()
             self.game_active=True
 
             #清空外星人和子弹列表
@@ -221,6 +237,8 @@ class AlienInvasion:
             bullet.draw_bullet()
         self.ship.blitme()
         self.aliens.draw(self.screen)
+        #显示得分
+        self.sb.show_score()
 
         #若游戏处于非活动状态，就绘制Play按钮
         if not self.game_active:
